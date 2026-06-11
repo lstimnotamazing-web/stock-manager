@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud Stock Manager</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    min-height:100vh;
+    padding:25px;
+    color:white;
+}
+
+.container{
+    max-width:1200px;
+    margin:auto;
+}
+
+.title{
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.title h1{
+    font-size:3rem;
+    background:linear-gradient(to right,#38bdf8,#818cf8);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.title p{
+    color:#cbd5e1;
+    margin-top:10px;
+}
+
+.top{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+    margin-bottom:25px;
+}
+
+.card{
+    background:rgba(255,255,255,0.08);
+    padding:20px;
+    border-radius:20px;
+    backdrop-filter:blur(10px);
+    transition:0.3s;
+}
+
+.card:hover{
+    transform:translateY(-5px);
+}
+
+.card h2{
+    font-size:1rem;
+    color:#cbd5e1;
+}
+
+.card h1{
+    margin-top:10px;
+}
+
+.form{
+    background:rgba(255,255,255,0.08);
+    padding:25px;
+    border-radius:20px;
+    margin-bottom:25px;
+}
+
+.form h2{
+    margin-bottom:20px;
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:15px;
+}
+
+input{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    outline:none;
+    font-size:1rem;
+}
+
+button{
+    border:none;
+    padding:12px 16px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:600;
+    transition:0.3s;
+}
+
+button:hover{
+    transform:scale(1.05);
+}
+
+.add-btn{
+    background:linear-gradient(to right,#06b6d4,#3b82f6);
+    color:white;
+}
+
+.plus{
+    background:#22c55e;
+    color:white;
+}
+
+.minus{
+    background:#f59e0b;
+    color:white;
+}
+
+.delete{
+    background:#ef4444;
+    color:white;
+}
+
+.table-box{
+    overflow-x:auto;
+    background:rgba(255,255,255,0.08);
+    padding:20px;
+    border-radius:20px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th,td{
+    padding:15px;
+    text-align:center;
+}
+
+th{
+    background:rgba(255,255,255,0.1);
+}
+
+tr{
+    border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+.low{
+    color:#ef4444;
+    font-weight:700;
+}
+
+.good{
+    color:#22c55e;
+    font-weight:700;
+}
+
+.footer{
+    text-align:center;
+    margin-top:30px;
+    color:#94a3b8;
+}
+
+@media(max-width:700px){
+
+.title h1{
+    font-size:2rem;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="title">
+    <h1>Cloud Stock Manager</h1>
+    <p>Live Sync Between Devices 🚀</p>
+</div>
+
+<div class="top">
+
+    <div class="card">
+        <h2>Total Products</h2>
+        <h1 id="products">0</h1>
+    </div>
+
+    <div class="card">
+        <h2>Total Quantity</h2>
+        <h1 id="quantity">0</h1>
+    </div>
+
+    <div class="card">
+        <h2>Total Stock Value</h2>
+        <h1>₹ <span id="value">0</span></h1>
+    </div>
+
+</div>
+
+<div class="form">
+
+<h2>Add Product</h2>
+
+<div class="form-grid">
+
+    <input type="text" id="name" placeholder="Product Name">
+
+    <input type="number" id="qty" placeholder="Quantity">
+
+    <input type="number" id="price" placeholder="Price">
+
+    <button class="add-btn" onclick="addProduct()">
+        Add Product
+    </button>
+
+</div>
+
+</div>
+
+<div class="table-box">
+
+<table>
+
+<thead>
+<tr>
+    <th>Product</th>
+    <th>Qty</th>
+    <th>Price</th>
+    <th>Total</th>
+    <th>Status</th>
+    <th>Add</th>
+    <th>Remove</th>
+    <th>Delete</th>
+</tr>
+</thead>
+
+<tbody id="tbody">
+
+</tbody>
+
+</table>
+
+</div>
+
+<div class="footer">
+Skill Forge Stock Management System
+</div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getDatabase,
+ref,
+push,
+onValue,
+remove,
+update
+}
+
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+
+// FIREBASE CONFIG
+
+const firebaseConfig = {
+
+  apiKey: "AIzaSyBY6xSt-HPDKA0HuTdYg6TMp-prOjw5z9w",
+
+  authDomain: "stock-manager-abe56.firebaseapp.com",
+
+  databaseURL: "https://stock-manager-abe56-default-rtdb.firebaseio.com",
+
+  projectId: "stock-manager-abe56",
+
+  storageBucket: "stock-manager-abe56.firebasestorage.app",
+
+  messagingSenderId: "157889373409",
+
+  appId: "1:157889373409:web:e836db61677785c2ef83a0"
+
+};
+
+
+// START FIREBASE
+
+const app = initializeApp(firebaseConfig);
+
+const db = getDatabase(app);
+
+const productsRef = ref(db,"products");
+
+
+// ADD PRODUCT
+
+window.addProduct = function(){
+
+    let name = document.getElementById("name").value;
+
+    let qty = parseInt(document.getElementById("qty").value);
+
+    let price = parseInt(document.getElementById("price").value);
+
+    if(!name || !qty || !price){
+
+        alert("Please fill all fields");
+
+        return;
+
+    }
+
+    push(productsRef,{
+        name,
+        qty,
+        price
+    });
+
+    document.getElementById("name").value="";
+    document.getElementById("qty").value="";
+    document.getElementById("price").value="";
+
+};
+
+
+// LIVE DATABASE SYNC
+
+onValue(productsRef,(snapshot)=>{
+
+    let tbody = document.getElementById("tbody");
+
+    tbody.innerHTML="";
+
+    let totalProducts = 0;
+
+    let totalQty = 0;
+
+    let totalValue = 0;
+
+    let data = snapshot.val();
+
+    if(data){
+
+        for(let id in data){
+
+            let item = data[id];
+
+            totalProducts++;
+
+            totalQty += item.qty;
+
+            totalValue += item.qty * item.price;
+
+            let status = item.qty <=5
+            ? `<span class="low">Low Stock</span>`
+            : `<span class="good">In Stock</span>`;
+
+            tbody.innerHTML += `
+
+            <tr>
+
+                <td>${item.name}</td>
+
+                <td>${item.qty}</td>
+
+                <td>₹ ${item.price}</td>
+
+                <td>₹ ${item.qty * item.price}</td>
+
+                <td>${status}</td>
+
+                <td>
+                    <button class="plus"
+                    onclick="increaseQty('${id}',${item.qty})">
+                    +
+                    </button>
+                </td>
+
+                <td>
+                    <button class="minus"
+                    onclick="decreaseQty('${id}',${item.qty})">
+                    -
+                    </button>
+                </td>
+
+                <td>
+                    <button class="delete"
+                    onclick="deleteProduct('${id}')">
+                    Delete
+                    </button>
+                </td>
+
+            </tr>
+
+            `;
+
+        }
+
+    }
+
+    document.getElementById("products").innerText = totalProducts;
+
+    document.getElementById("quantity").innerText = totalQty;
+
+    document.getElementById("value").innerText = totalValue;
+
+});
+
+
+// ADD STOCK
+
+window.increaseQty = function(id,currentQty){
+
+    update(ref(db,"products/"+id),{
+        qty: currentQty + 1
+    });
+
+};
+
+
+// REMOVE STOCK
+
+window.decreaseQty = function(id,currentQty){
+
+    if(currentQty <= 0) return;
+
+    update(ref(db,"products/"+id),{
+        qty: currentQty - 1
+    });
+
+};
+
+
+// DELETE PRODUCT
+
+window.deleteProduct = function(id){
+
+    remove(ref(db,"products/"+id));
+
+};
+
+</script>
+
+</body>
+</html>
